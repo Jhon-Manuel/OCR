@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Patrimonio.Contexts;
 using Patrimonio.Domains;
+using Patrimonio.Repositories;
 
 namespace Patrimonio.Controllers
 {
@@ -14,25 +15,25 @@ namespace Patrimonio.Controllers
     [ApiController]
     public class PerfisController : ControllerBase
     {
-        private readonly PatrimonioContext _context;
+        private readonly PerfilRepository _perfilRepository;
 
-        public PerfisController(PatrimonioContext context)
+        public PerfisController(PerfilRepository repo)
         {
-            _context = context;
+            _perfilRepository = repo;
         }
 
         // GET: api/Perfis
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Perfil>>> GetPerfils()
+        public ActionResult<IEnumerable<Perfil>> GetPerfils()
         {
-            return await _context.Perfils.ToListAsync();
+            return _perfilRepository.Listar();
         }
 
         // GET: api/Perfis/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Perfil>> GetPerfil(int id)
+        public ActionResult<Perfil> GetPerfil(int id)
         {
-            var perfil = await _context.Perfils.FindAsync(id);
+            var perfil = _perfilRepository.BuscarPorID(id);
 
             if (perfil == null)
             {
@@ -45,18 +46,18 @@ namespace Patrimonio.Controllers
         // PUT: api/Perfis/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutPerfil(int id, Perfil perfil)
+        public IActionResult PutPerfil(int id, Perfil perfil)
         {
             if (id != perfil.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(perfil).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                var novoPerfil = _perfilRepository.BuscarPorID(id);
+
+                _perfilRepository.Atualizar(id, novoPerfil);
             }
             catch (DbUpdateConcurrencyException)
             {
