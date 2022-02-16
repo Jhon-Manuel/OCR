@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Patrimonio.Contexts;
 using Patrimonio.Domains;
+using Patrimonio.Interfaces;
 
 namespace Patrimonio.Controllers
 {
@@ -14,61 +15,64 @@ namespace Patrimonio.Controllers
     [ApiController]
     public class ComentariosController : ControllerBase
     {
-        private readonly PatrimonioContext _comentarioRepository;
+        private readonly IComentarioRepository _comentarioRepository;
 
-        public ComentariosController(PatrimonioContext context)
+        public ComentariosController(IComentarioRepository repo)
         {
-            _context = context;
+            _comentarioRepository = repo;
         }
 
         // GET: api/Comentarios
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Comentario>>> GetComentarios()
+        public ActionResult<IEnumerable<Comentario>> GetComentarios()
         {
-            return await _context.Comentarios.ToListAsync();
+            try
+            {
+                return Ok(_comentarioRepository.Listar());
+            }
+            catch (Exception erro)
+            {
+
+                return BadRequest(erro);
+            }
         }
 
         // GET: api/Comentarios/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Comentario>> GetComentario(int id)
+        public ActionResult<Comentario> GetComentario(int id)
         {
-            var comentario = await _context.Comentarios.FindAsync(id);
+            var comentario = _comentarioRepository.BuscarPorID(id);
 
             if (comentario == null)
+                {
+                    return NotFound();
+                }
+
+            try
             {
-                return NotFound();
+
+                return Ok(comentario);
+
+            }
+            catch (Exception erro)
+            {
+
+                return BadRequest(erro);
             }
 
-            return comentario;
         }
 
         // PUT: api/Comentarios/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutComentario(int id, Comentario comentario)
+        public IActionResult PutComentario(int id, Comentario comentario)
         {
             if (id != comentario.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(comentario).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ComentarioExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            _comentarioRepository.Alterar(comentario);
 
             return NoContent();
         }
@@ -76,33 +80,38 @@ namespace Patrimonio.Controllers
         // POST: api/Comentarios
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Comentario>> PostComentario(Comentario comentario)
+        public ActionResult<Comentario> PostComentario(Comentario comentario)
         {
-            _context.Comentarios.Add(comentario);
-            await _context.SaveChangesAsync();
+            _comentarioRepository.Cadastrar(comentario);
 
             return CreatedAtAction("GetComentario", new { id = comentario.Id }, comentario);
         }
 
         // DELETE: api/Comentarios/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteComentario(int id)
+        public IActionResult DeleteComentario(int id)
         {
-            var comentario = await _context.Comentarios.FindAsync(id);
+            var comentario = _comentarioRepository.BuscarPorID(id);
+
             if (comentario == null)
             {
                 return NotFound();
             }
 
-            _context.Comentarios.Remove(comentario);
-            await _context.SaveChangesAsync();
+            _comentarioRepository.Excluir(comentario);
 
             return NoContent();
         }
 
         private bool ComentarioExists(int id)
         {
-            return _context.Comentarios.Any(e => e.Id == id);
+            var buscado = _comentarioRepository.BuscarPorID(id);
+
+            if (buscado == null)
+            {
+                return false;
+            }
+            return true;
         }
     }
 }

@@ -36,7 +36,7 @@ namespace Patrimonio.Controllers
         {
             var equipamento =  _equipamentoRepository.BuscarPorID(id);
 
-            if (equipamento == null)
+            if (equipamento == null) 
             {
                 return NotFound();
             }

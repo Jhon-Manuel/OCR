@@ -7,17 +7,18 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Patrimonio.Contexts;
 using Patrimonio.Domains;
+using Patrimonio.Interfaces;
 using Patrimonio.Repositories;
 
 namespace Patrimonio.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class PerfisController : ControllerBase
+    public class PerfilsController : ControllerBase
     {
-        private readonly PerfilRepository _perfilRepository;
+        private readonly IPerfilRepository _perfilRepository;
 
-        public PerfisController(PerfilRepository repo)
+        public PerfilsController(PerfilRepository repo)
         {
             _perfilRepository = repo;
         }
@@ -26,7 +27,7 @@ namespace Patrimonio.Controllers
         [HttpGet]
         public ActionResult<IEnumerable<Perfil>> GetPerfils()
         {
-            return _perfilRepository.Listar();
+            return Ok(_perfilRepository.Listar());
         }
 
         // GET: api/Perfis/5
@@ -57,7 +58,7 @@ namespace Patrimonio.Controllers
             {
                 var novoPerfil = _perfilRepository.BuscarPorID(id);
 
-                _perfilRepository.Atualizar(id, novoPerfil);
+                _perfilRepository.Alterar( novoPerfil);
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -77,33 +78,38 @@ namespace Patrimonio.Controllers
         // POST: api/Perfis
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Perfil>> PostPerfil(Perfil perfil)
+        public ActionResult<Perfil> PostPerfil(Perfil perfil)
         {
-            _context.Perfils.Add(perfil);
-            await _context.SaveChangesAsync();
+            _perfilRepository.Cadastrar(perfil);
 
             return CreatedAtAction("GetPerfil", new { id = perfil.Id }, perfil);
         }
 
         // DELETE: api/Perfis/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeletePerfil(int id)
+        public IActionResult DeletePerfil(int id)
         {
-            var perfil = await _context.Perfils.FindAsync(id);
+            var perfil = _perfilRepository.BuscarPorID(id);
             if (perfil == null)
             {
                 return NotFound();
             }
 
-            _context.Perfils.Remove(perfil);
-            await _context.SaveChangesAsync();
+            _perfilRepository.Excluir(perfil);
 
             return NoContent();
         }
 
         private bool PerfilExists(int id)
         {
-            return _context.Perfils.Any(e => e.Id == id);
+            var buscado = _perfilRepository.BuscarPorID(id);
+
+            if (buscado == null)
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }

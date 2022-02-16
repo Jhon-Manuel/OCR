@@ -9,5 +9,11 @@ namespace Patrimonio.Interfaces
     public interface IUsuarioRepository
     {
         Usuario Login(string email, string senha);
+
+        Usuario Cadastrar(Usuario usuario);
+        Usuario Alterar(Usuario usuario);
+        void Excluir(Usuario usuario);
+        IEnumerable<Usuario> Listar();
+        Usuario BuscarPorID(int id);
     }
 }
